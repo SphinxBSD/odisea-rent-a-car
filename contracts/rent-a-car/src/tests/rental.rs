@@ -1,7 +1,6 @@
 use crate::{
     storage::{
-        car::read_car, contract_balance::read_contract_balance, rental::read_rental,
-        types::car_status::CarStatus,
+        car::read_car, contract_balance::read_contract_balance, rental::read_rental, rental_fee::read_rental_fee, types::car_status::CarStatus
     },
     tests::config::{contract::ContractTest, utils::get_contract_events},
 };
@@ -23,6 +22,7 @@ pub fn test_rental_car_successfully() {
     let price_per_day = 1500_i128;
     let total_days = 3;
     let amount = 4500_i128;
+    let rental_fee=10_i128;
 
     let (_, token_admin, _) = token;
 
@@ -35,12 +35,19 @@ pub fn test_rental_car_successfully() {
         env.as_contract(&contract.address, || read_contract_balance(&env));
     assert_eq!(initial_contract_balance, 0);
 
-    contract.rental(&renter, &owner, &total_days, &amount);
+    let initial_rental_fee =
+        env.as_contract(&contract.address, || read_rental_fee(&env)).unwrap();
+    assert_eq!(initial_rental_fee.available_to_withdraw, 0);
+
+    contract.rental(&renter, &owner, &total_days, &amount, &rental_fee);
     let contract_events = get_contract_events(&env, &contract.address);
 
     let updated_contract_balance =
         env.as_contract(&contract.address, || read_contract_balance(&env));
-    assert_eq!(updated_contract_balance, amount);
+    assert_eq!(updated_contract_balance, amount + rental_fee);
+
+    let fee = env.as_contract(&contract.address, || read_rental_fee(&env)).unwrap();
+    assert_eq!(fee.available_to_withdraw, rental_fee);
 
     let car = env.as_contract(&contract.address, || read_car(&env, &owner)).unwrap();
     assert_eq!(car.car_status, CarStatus::Rented);
@@ -48,7 +55,6 @@ pub fn test_rental_car_successfully() {
 
     let rental = env.as_contract(&contract.address, || read_rental(&env, &renter, &owner)).unwrap();
     assert_eq!(rental.total_days_to_rent, total_days);
-    assert_eq!(rental.amount, amount);
 
     assert_eq!(rental.amount, amount);
     assert_eq!(

@@ -3,13 +3,7 @@ use crate::{
     interfaces::contract::RentACarContractTrait,
     methods::{public, token::token::token_transfer},
     storage::{
-        admin::{has_admin, read_admin, write_admin},
-        car::{has_car, read_car, remove_car, write_car},
-        contract_balance::{read_contract_balance, write_contract_balance},
-        rental::write_rental,
-        structs::{car::Car, rental::Rental},
-        token::write_token,
-        types::{car_status::CarStatus, errors::Error},
+        admin::{has_admin, read_admin, write_admin}, car::{has_car, read_car, remove_car, write_car}, contract_balance::{read_contract_balance, write_contract_balance}, rental::write_rental, rental_fee::{has_rental_fee, read_rental_fee, write_rental_fee}, structs::{car::Car, rental::Rental, rental_fee::RentalFee}, token::write_token, types::{car_status::CarStatus, errors::Error}
     },
 };
 use soroban_sdk::{contract, contractimpl, Address, Env};
@@ -28,8 +22,13 @@ impl RentACarContractTrait for RentACarContract {
             return Err(Error::ContractInitialized);
         }
 
+        let rental_fee = RentalFee{
+            available_to_withdraw: 0
+        };
+
         write_admin(env, &admin);
         write_token(env, &token);
+        write_rental_fee(env, &rental_fee);
 
         events::contract::contract_initialized(env, admin, token);
 
@@ -70,6 +69,7 @@ impl RentACarContractTrait for RentACarContract {
         owner: Address,
         total_days_to_rent: u32,
         amount: i128,
+        rental_fee: i128,
     ) -> Result<(), Error> {
         // VALIDACIONES
         renter.require_auth();
@@ -93,7 +93,19 @@ impl RentACarContractTrait for RentACarContract {
         }
 
         // LOGICA
-        token_transfer(&env, &renter, &env.current_contract_address(), &amount)?;
+        // let total_amount = amount + rental_fee;
+        let total_amount = match amount.checked_add(rental_fee) {
+            Some(rental_fee) => rental_fee,
+            None => return Err(Error::OverflowError),
+        };
+        
+        let mut fee = read_rental_fee(env)?;
+        fee.available_to_withdraw = fee
+            .available_to_withdraw
+            .checked_add(rental_fee)
+            .ok_or(Error::OverflowError)?;
+        
+        token_transfer(&env, &renter, &env.current_contract_address(), &total_amount)?;
 
         car.car_status = CarStatus::Rented;
         car.available_to_withdraw = car
@@ -103,19 +115,21 @@ impl RentACarContractTrait for RentACarContract {
 
         let rental = Rental {
             total_days_to_rent,
-            amount,
+            amount
         };
 
         let mut contract_balance = read_contract_balance(&env);
 
         contract_balance = contract_balance
-            .checked_add(amount)
+            .checked_add(total_amount)
             .ok_or(Error::OverflowError)?;
 
         // ALMACENAMIENTO
         write_contract_balance(&env, &contract_balance);
         write_car(env, &owner, &car);
         write_rental(env, &renter, &owner, &rental);
+        write_rental_fee(env, &fee);
+        // Aqui deberia existir un "write_fee"
 
         // EVENTOS
         events::rental::rented(env, renter, owner, total_days_to_rent, amount);
@@ -151,6 +165,10 @@ impl RentACarContractTrait for RentACarContract {
             return Err(Error::InsufficientBalance);
         }
 
+        if car.car_status != CarStatus::Returned {
+            return Err(Error::CarStillRented);
+        }
+
         let mut contract_balance = read_contract_balance(&env);
 
         if amount > contract_balance {
@@ -171,6 +189,63 @@ impl RentACarContractTrait for RentACarContract {
         write_contract_balance(&env, &contract_balance);
 
         events::payout_owner::payout_owner(env, owner, amount);
+
+        Ok(())
+    }
+
+    // funcion para retirar fees del contrato por parte del admin
+    /*
+    Retirar
+     */
+    fn withdraw_fees(env: &Env) -> Result<(), Error> {
+        let admin = read_admin(env)?;
+        admin.require_auth();
+
+        if !has_rental_fee(env) {
+            return Err(Error::RentalFeeNotFound);
+        }
+
+        let fee = read_rental_fee(env)?;
+
+        if fee.available_to_withdraw == 0 {
+            return Err(Error::NoFeeForWithdrawal);
+        }
+
+        let mut contract_balance = read_contract_balance(&env);
+
+        if fee.available_to_withdraw > contract_balance {
+            return Err(Error::BalanceNotAvailableForAmountRequested);
+        }
+
+        token_transfer(&env, &env.current_contract_address(), &admin, &fee.available_to_withdraw)?;
+
+        contract_balance = contract_balance
+            .checked_sub(fee.available_to_withdraw)
+            .ok_or(Error::UnderFlowError)?;
+
+        write_contract_balance(&env, &contract_balance);
+
+        events::withdraw_fees::withdraw_fees(env, admin, fee.available_to_withdraw);
+
+        Ok(())
+    }
+
+    fn return_car(
+        env: &Env,
+        renter: Address,
+        owner: Address
+    ) -> Result<(), Error> {
+        renter.require_auth();
+        
+        let mut car = read_car(env, &owner)?;
+
+        if car.car_status != CarStatus::Rented {
+            return Err(Error::CarNotRented);
+        }
+
+        car.car_status = CarStatus::Returned;
+
+        write_car(env, &owner, &car);
 
         Ok(())
     }

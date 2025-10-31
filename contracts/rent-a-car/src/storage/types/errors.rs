@@ -20,4 +20,8 @@ pub enum Error {
     AdminNotFound = 13,
     OverflowError = 14,
     UnderFlowError = 15,
+    RentalFeeNotFound = 16,
+    NoFeeForWithdrawal =17,
+    CarStillRented = 18,
+    CarNotRented = 19,
 }

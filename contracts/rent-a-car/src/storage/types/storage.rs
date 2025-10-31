@@ -8,5 +8,6 @@ pub enum DataKey {
     Token,                      // direccion del token de pago aceptado
     ContractBalance,
     Car(Address),               // auto asociado a un owner
-    Rental(Address, Address)    // registro de alquiler entre renter y owner
+    Rental(Address, Address),   // registro de alquiler entre renter y owner
+    RentalFee,
 }

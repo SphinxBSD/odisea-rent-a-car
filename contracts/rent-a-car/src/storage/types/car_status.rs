@@ -7,4 +7,5 @@ pub enum CarStatus {
     Available,
     Rented,
     Maintenance,
+    Returned
 }
