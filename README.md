@@ -290,6 +290,9 @@ pub fn test_withdraw_fees_successfully() {
 
 ```
 
+Adjunto captura de la ejecucion del test:
+![alt text](assets/img3.png)
+
 **Queda concluido de este modo esta asignacion.**
 
 ### 🚗 Retiro de owners restringido
@@ -355,6 +358,9 @@ pub enum CarStatus {
     let car = env.as_contract(&contract.address, || read_car(&env, &owner)).unwrap();
     assert_eq!(car.car_status, CarStatus::Returned);
 ```
+
+Adjunto captura de la ejecucion del test:
+![alt text](assets/img4.png)
 
 **De momento aun queda pendiente la ultima asignacion.**
 
