@@ -1,5 +1,5 @@
 use crate::{
-    storage::{admin::{self, read_admin}, car::read_car, contract_balance::read_contract_balance},
+    storage::{admin::{ read_admin}, contract_balance::read_contract_balance},
     tests::config::{contract::ContractTest, utils::get_contract_events},
 };
 use soroban_sdk::{testutils::Address as _, Address, vec, Symbol, IntoVal};

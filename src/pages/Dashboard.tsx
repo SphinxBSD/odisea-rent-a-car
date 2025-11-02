@@ -45,7 +45,7 @@ export default function Dashboard() {
     };
 
     setCars((prevCars) => [...prevCars, newCar]);
-    setHashId(txHash as string);
+    setHashId(txHash as unknown as string);
     closeModal();
   };
 
