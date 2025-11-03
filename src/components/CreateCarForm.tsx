@@ -52,100 +52,119 @@ export const CreateCarForm = ({
 
   return (
     <Modal title="Create New Car" closeModal={onCancel}>
-      <div className="bg-white rounded-lg px-8">
-        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
-          <div>
-            <label
-              htmlFor="brand"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Brand
-            </label>
-            <input
-              id="brand"
-              name="brand"
-              type="text"
-              value={formData.brand}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-1"
-            />
+      <div className="bg-gradient-to-br from-white via-emerald-50/30 to-blue-50/30 rounded-lg px-8 pb-2">
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            {/* Brand */}
+            <div>
+              <label
+                htmlFor="brand"
+                className="block text-sm font-bold text-gray-700 mb-2"
+              >
+                Brand
+              </label>
+              <input
+                id="brand"
+                name="brand"
+                type="text"
+                value={formData.brand}
+                onChange={handleChange}
+                className="block w-full rounded-lg border-2 border-gray-200 shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all duration-200 px-4 py-2.5 text-gray-900"
+                placeholder="e.g., Toyota"
+              />
+            </div>
+
+            {/* Model */}
+            <div>
+              <label
+                htmlFor="model"
+                className="block text-sm font-bold text-gray-700 mb-2"
+              >
+                Model
+              </label>
+              <input
+                id="model"
+                name="model"
+                type="text"
+                value={formData.model}
+                onChange={handleChange}
+                className="block w-full rounded-lg border-2 border-gray-200 shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all duration-200 px-4 py-2.5 text-gray-900"
+                placeholder="e.g., Camry"
+              />
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="model"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Model
-            </label>
-            <input
-              id="model"
-              name="model"
-              type="text"
-              value={formData.model}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-1"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Color */}
+            <div>
+              <label
+                htmlFor="color"
+                className="block text-sm font-bold text-gray-700 mb-2"
+              >
+                Color
+              </label>
+              <input
+                id="color"
+                name="color"
+                type="text"
+                value={formData.color}
+                onChange={handleChange}
+                className="block w-full rounded-lg border-2 border-gray-200 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 px-4 py-2.5 text-gray-900"
+                placeholder="e.g., Silver"
+              />
+            </div>
+
+            {/* Passengers */}
+            <div>
+              <label
+                htmlFor="passengers"
+                className="block text-sm font-bold text-gray-700 mb-2"
+              >
+                Passengers
+              </label>
+              <input
+                id="passengers"
+                name="passengers"
+                type="number"
+                min="1"
+                max="10"
+                value={formData.passengers}
+                onChange={handleChange}
+                className="block w-full rounded-lg border-2 border-gray-200 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 px-4 py-2.5 text-gray-900"
+              />
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="color"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Color
-            </label>
-            <input
-              id="color"
-              name="color"
-              type="text"
-              value={formData.color}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-1"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="passengers"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Number of Passengers
-            </label>
-            <input
-              id="passengers"
-              name="passengers"
-              type="number"
-              min="1"
-              max="10"
-              value={formData.passengers}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-1"
-            />
-          </div>
-
+          {/* Price per Day */}
           <div>
             <label
               htmlFor="pricePerDay"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-bold text-gray-700 mb-2"
             >
-              Price per Day
+              Price per Day ($)
             </label>
-            <input
-              id="pricePerDay"
-              name="pricePerDay"
-              type="number"
-              min="0"
-              value={formData.pricePerDay}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-1"
-            />
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">
+                $
+              </span>
+              <input
+                id="pricePerDay"
+                name="pricePerDay"
+                type="number"
+                min="0"
+                value={formData.pricePerDay}
+                onChange={handleChange}
+                className="block w-full rounded-lg border-2 border-gray-200 shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all duration-200 pl-8 pr-4 py-2.5 text-gray-900"
+                placeholder="0.00"
+              />
+            </div>
           </div>
 
+          {/* Owner Address */}
           <div>
             <label
               htmlFor="ownerAddress"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-bold text-gray-700 mb-2"
             >
               Owner Address
             </label>
@@ -155,30 +174,53 @@ export const CreateCarForm = ({
               type="text"
               value={formData.ownerAddress}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-1"
+              className="block w-full rounded-lg border-2 border-gray-200 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 px-4 py-2.5 text-gray-900 font-mono text-sm"
+              placeholder="G..."
             />
           </div>
 
-          <div className="flex items-center">
-            <input
-              id="ac"
-              name="ac"
-              type="checkbox"
-              checked={formData.ac}
-              onChange={handleChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="ac" className="ml-2 block text-sm text-gray-700">
-              Air Conditioning
-            </label>
+          {/* Air Conditioning */}
+          <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg p-4 border-2 border-emerald-100">
+            <div className="flex items-center">
+              <input
+                id="ac"
+                name="ac"
+                type="checkbox"
+                checked={formData.ac}
+                onChange={handleChange}
+                className="h-5 w-5 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded cursor-pointer"
+              />
+              <label
+                htmlFor="ac"
+                className="ml-3 block text-sm font-semibold text-gray-700 cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-emerald-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Air Conditioning Available
+                </span>
+              </label>
+            </div>
           </div>
 
-          <div className="flex justify-end gap-4 space-x-3 pt-2 pb-6">
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4 pb-6">
             {onCancel && (
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+                className="px-6 py-2.5 border-2 border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 cursor-pointer"
               >
                 Cancel
               </button>
@@ -186,9 +228,49 @@ export const CreateCarForm = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 cursor-pointer"
+              className="px-6 py-2.5 border-2 border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 disabled:transform-none cursor-pointer"
             >
-              {isSubmitting ? "Creating..." : "Create Car"}
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Creating...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Create Car
+                </span>
+              )}
             </button>
           </div>
         </form>

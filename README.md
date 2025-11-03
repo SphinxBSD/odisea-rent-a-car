@@ -367,8 +367,10 @@ pub fn test_withdraw_fees_cannot_withdraw_twice() {
 }
 ```
 
-Adjunto captura de la ejecucion del test:
-![alt text](assets/img5.png)
+- Adjunto captura de la ejecucion del test:
+  ![alt text](assets/img5.png)
+
+- Adjunto captura de vista del nuevo boton de retiro de comisiones
 
 **Queda concluido de este modo esta asignacion.**
 
