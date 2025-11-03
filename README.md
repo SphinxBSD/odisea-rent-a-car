@@ -2,6 +2,12 @@
 
 Como cierre del proyecto, estaremos mejorando la funcionalidad del contrato inteligente para que la dApp funcione de manera correcta y segura. ✅
 
+## Link del smart contract desplegado en testnet
+
+> Primera version estable del smart contract
+
+https://stellar.expert/explorer/testnet/contract/CDWOUDSPHDWIDH2G2LSAWQJ473C6MVQRFBKTBETDGQ5DYA3BQOI3XHFJ
+
 ## 🛠️ Cambios a implementar:
 
 ### 🧾 Comisión del administrador
@@ -18,7 +24,7 @@ Estas asignaciones se resuelven de manera conjunta y a continuacion redacto el d
 ### Solucion
 
 1. Se creo un nuevo archivo storage para la comision monetaria:
-   contracts/rent-a-car/src/storage/rental_fee.rs
+   > contracts/rent-a-car/src/storage/rental_fee.rs
 
 ```rust
 use soroban_sdk::{Address, Env};
@@ -40,7 +46,7 @@ pub(crate) fn read_rental_fee(env: &Env) -> Result<RentalFee, Error>  {
 ```
 
 2. Y tambien su estructura del mismo:
-   contracts/rent-a-car/src/storage/struct/rental_fee.rs
+   > contracts/rent-a-car/src/storage/struct/rental_fee.rs
 
 ```rust
 use soroban_sdk::{contracttype};
@@ -53,7 +59,7 @@ pub struct RentalFee {
 ```
 
 3. Luego procedi a modificar la funcion "rental", en el contrato:
-   contracts/rent-a-car/src/contract.rs
+   > contracts/rent-a-car/src/contract.rs
 
 ```rust
 fn rental(
@@ -134,7 +140,7 @@ fn rental(
 ```
 
 4. Luego se modifico el test de la funcion "rental", para verificar que funcione correctamente:
-   contracts/rent-a-car/src/tests/rental.rs
+   > contracts/rent-a-car/src/tests/rental.rs
 
 ```rust
     let initial_rental_fee =
@@ -173,6 +179,10 @@ El administrador podrá retirar las comisiones acumuladas en cualquier momento.
 
 2. Luego se implemento la funcion haciendo uso del storage "rental_fee":
 
+- Se realizo una correccion para evitar el retiro de comisiones de manera ilimitada
+
+> contracts/src/contract
+
 ```rust
     fn withdraw_fees(env: &Env) -> Result<(), Error> {
         let admin = read_admin(env)?;
@@ -204,12 +214,21 @@ El administrador podrá retirar las comisiones acumuladas en cualquier momento.
 
         events::withdraw_fees::withdraw_fees(env, admin, fee.available_to_withdraw);
 
+        let mut fee = read_rental_fee(env)?;
+        fee.available_to_withdraw = fee
+            .available_to_withdraw
+            .checked_sub(fee.available_to_withdraw)
+            .ok_or(Error::UnderFlowError)?;
+
+        write_rental_fee(env, &fee);
+
         Ok(())
     }
 ```
 
 3. Tambien se creo el evento para la funcion
-   constracts/rent-a-car/src/events/withdraw_fees.rs
+
+> constracts/rent-a-car/src/events/withdraw_fees.rs
 
 ```rust
 use soroban_sdk::{Address, Env, Symbol};
@@ -224,12 +243,15 @@ pub(crate) fn withdraw_fees(env: &Env, admin: Address, amount: i128) {
 }
 ```
 
-4. Luego se procedio a realizar el test especifico para esta funcion
-   constracts/rent-a-car/src/tests/withdraw_fees.rs
+4. Luego se procedio a realizar el test especifico para esta funcion:
+
+- Se realizarion dos test uno para verificar que que se retira la comision correctamente y otra para validar que no se pueda retirar de manera ilimitada.
+
+> constracts/rent-a-car/src/tests/withdraw_fees.rs
 
 ```rust
 use crate::{
-    storage::{admin::{self, read_admin}, car::read_car, contract_balance::read_contract_balance},
+    storage::{admin::read_admin, contract_balance::read_contract_balance, rental_fee::read_rental_fee},
     tests::config::{contract::ContractTest, utils::get_contract_events},
 };
 use soroban_sdk::{testutils::Address as _, Address, vec, Symbol, IntoVal};
@@ -288,10 +310,65 @@ pub fn test_withdraw_fees_successfully() {
     );
 }
 
+#[test]
+pub fn test_withdraw_fees_cannot_withdraw_twice() {
+    let ContractTest {
+        env,
+        contract,
+        token,
+        ..
+    } = ContractTest::setup();
+
+    env.mock_all_auths();
+
+    let owner = Address::generate(&env);
+    let renter = Address::generate(&env);
+    let admin = env.as_contract(&contract.address, || read_admin(&env)).unwrap();
+
+    let price_per_day = 1500_i128;
+    let total_days = 3;
+    let amount = 4500_i128;
+    let rental_fee = 10_i128;
+
+    let (_, token_admin, _) = token;
+
+    let amount_mint = 10_000_i128;
+    token_admin.mint(&renter, &amount_mint);
+
+    // Add car and create rental to generate fees
+    contract.add_car(&owner, &price_per_day);
+    contract.rental(&renter, &owner, &total_days, &amount, &rental_fee);
+
+    let contract_balance_before = env.as_contract(&contract.address, || read_contract_balance(&env));
+    assert_eq!(contract_balance_before, amount + rental_fee);
+
+    // First withdrawal should succeed
+    contract.withdraw_fees();
+
+    let contract_balance_after_first = env.as_contract(&contract.address, || read_contract_balance(&env));
+    assert_eq!(contract_balance_after_first, amount);
+
+    // Verify fee.available_to_withdraw is now 0
+    let fee = env.as_contract(&contract.address, || read_rental_fee(&env)).unwrap();
+    assert_eq!(fee.available_to_withdraw, 0);
+
+    // Second withdrawal attempt should fail with NoFeeForWithdrawal error
+    let result = contract.try_withdraw_fees();
+    assert!(result.is_err());
+
+    // Verify the contract balance hasn't changed (no additional withdrawal occurred)
+    let contract_balance_after_second = env.as_contract(&contract.address, || read_contract_balance(&env));
+    assert_eq!(contract_balance_after_second, amount);
+
+    // Verify admin balance to ensure they only received the fee once
+    let (token_client, _, _) = token;
+    let admin_balance = token_client.balance(&admin);
+    assert_eq!(admin_balance, rental_fee);
+}
 ```
 
 Adjunto captura de la ejecucion del test:
-![alt text](assets/img3.png)
+![alt text](assets/img5.png)
 
 **Queda concluido de este modo esta asignacion.**
 
@@ -301,6 +378,7 @@ Los owners solo podrán retirar dinero cuando el auto esté devuelto.
 ➜ Se valida que si no tiene fondos disponibles, el botón Withdraw debe estar deshabilitado.
 
 1. Se agrego un nuevo estado en "car_status", de "Returned".
+   > contracts/src/storage/types/car_status.rs
 
 ```rust
 use soroban_sdk::{contracttype};
@@ -317,6 +395,7 @@ pub enum CarStatus {
 ```
 
 2. Se agrego la siguiente validacion dentro de la funcion "payout_owner"
+   > contracts/src/contract
 
 ```rust
     if car.car_status != CarStatus::Returned {
@@ -324,7 +403,16 @@ pub enum CarStatus {
     }
 ```
 
-3. Se creo una nueva funcion para retornar o devolver el auto
+3. Se creo una nueva funcion dentro de la interfaz para retornar o devolver el auto
+
+> contracts/src/interfaces/contract.rs
+
+```rust
+    fn return_car(env: &Env, renter: Address, owner: Address) -> Result<(), Error>;
+```
+
+4. Se creo una nueva funcion para retornar o devolver el auto
+   > contracts/src/contract
 
 ```rust
     fn return_car(
@@ -348,7 +436,7 @@ pub enum CarStatus {
     }
 ```
 
-4. Dentro del test de la funcion se procedio con la verificacion de su funcionalidad
+5. Dentro del test de la funcion se procedio con la verificacion de su funcionalidad
 
 ```rust
     // AGREGAR: Devolver el auto para cambiar el estado a Returned
