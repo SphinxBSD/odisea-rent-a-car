@@ -30,11 +30,13 @@ export interface IRentACarContract extends IBaseContractClient {
     owner,
     total_days_to_rent,
     amount,
+    rental_fee,
   }: {
     renter: string;
     owner: string;
     total_days_to_rent: number;
     amount: number;
+    rental_fee: number;
   }) => Promise<this>;
 
   remove_car: ({ owner }: { owner: string }) => Promise<this>;
@@ -46,4 +48,6 @@ export interface IRentACarContract extends IBaseContractClient {
     owner: string;
     amount: number;
   }) => Promise<this>;
+
+  withdraw_fees: () => Promise<this>;
 }

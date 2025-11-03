@@ -227,6 +227,14 @@ impl RentACarContractTrait for RentACarContract {
 
         events::withdraw_fees::withdraw_fees(env, admin, fee.available_to_withdraw);
 
+        let mut fee = read_rental_fee(env)?;
+        fee.available_to_withdraw = fee
+            .available_to_withdraw
+            .checked_sub(fee.available_to_withdraw)
+            .ok_or(Error::UnderFlowError)?;
+
+        write_rental_fee(env, &fee);
+
         Ok(())
     }
 

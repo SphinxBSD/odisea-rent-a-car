@@ -27,7 +27,7 @@ export const CarsList = ({ cars }: CarsListProps) => {
     const txHash = await stellarService.submitTransaction(signedTx.signedTxXdr);
 
     setCars((prev) => prev.filter((car) => car.ownerAddress !== owner));
-    setHashId(txHash as string);
+    setHashId(txHash as unknown as string);
   };
 
   const handlePayout = async (owner: string, amount: number) => {
@@ -40,13 +40,25 @@ export const CarsList = ({ cars }: CarsListProps) => {
     const signedTx = await walletService.signTransaction(xdr);
     const txHash = await stellarService.submitTransaction(signedTx.signedTxXdr);
 
-    setHashId(txHash as string);
+    setHashId(txHash as unknown as string);
+  };
+
+  const handleWithdrawFees = async () => {
+    const contractClient =
+      await stellarService.buildClient<IRentACarContract>(walletAddress);
+
+    const result = await contractClient.withdraw_fees();
+    const xdr = result.toXDR();
+    const signedTx = await walletService.signTransaction(xdr);
+    const txHash = await stellarService.submitTransaction(signedTx.signedTxXdr);
+    setHashId(txHash as unknown as string);
   };
 
   const handleRent = async (
     car: ICar,
     renter: string,
     totalDaysToRent: number,
+    admin_fee: number,
   ) => {
     const contractClient =
       await stellarService.buildClient<IRentACarContract>(walletAddress);
@@ -56,6 +68,7 @@ export const CarsList = ({ cars }: CarsListProps) => {
       owner: car.ownerAddress,
       total_days_to_rent: totalDaysToRent,
       amount: car.pricePerDay * totalDaysToRent * ONE_XLM_IN_STROOPS,
+      rental_fee: admin_fee * ONE_XLM_IN_STROOPS,
     });
     const xdr = result.toXDR();
 
@@ -69,7 +82,7 @@ export const CarsList = ({ cars }: CarsListProps) => {
           : c,
       ),
     );
-    setHashId(txHash as string);
+    setHashId(txHash as unknown as string);
   };
 
   const getStatusStyle = (status: CarStatus) => {
@@ -88,12 +101,20 @@ export const CarsList = ({ cars }: CarsListProps) => {
   const renderActionButton = (car: ICar) => {
     if (selectedRole === UserRole.ADMIN) {
       return (
-        <button
-          onClick={() => void handleDelete(car.ownerAddress)}
-          className="px-3 py-1 bg-red-600 text-white rounded font-semibold hover:bg-red-700 transition-colors cursor-pointer"
-        >
-          Delete
-        </button>
+        <>
+          <button
+            onClick={() => void handleDelete(car.ownerAddress)}
+            className="px-3 py-1 bg-red-600 text-white rounded font-semibold hover:bg-red-700 transition-colors cursor-pointer"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => void handleWithdrawFees()}
+            className="px-3 py-1 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
+          >
+            Withdraw fees
+          </button>
+        </>
       );
     }
 
@@ -115,7 +136,7 @@ export const CarsList = ({ cars }: CarsListProps) => {
     ) {
       return (
         <button
-          onClick={() => void handleRent(car, walletAddress, 3)}
+          onClick={() => void handleRent(car, walletAddress, 3, 100)}
           className="px-3 py-1 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
         >
           Rent
